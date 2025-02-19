@@ -1,0 +1,10 @@
+Bittorent
+ChromeRDP
+Discord
+EAOrigin          
+MicrosoftTeams
+Slack
+Steam
+Teamviewer
+Webex
+Zoom

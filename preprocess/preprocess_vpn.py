@@ -7,8 +7,8 @@ from scapy.layers.l2 import Ether
 from scapy.packet import Padding
 from scipy import sparse
 import os
-from utlis import should_omit_packet, read_pcap, PREFIX_TO_APP_ID, PREFIX_TO_TRAFFIC_ID
-from utlis import PREFIX_TO_TorApp_ID, ID_TO_APP, ID_TO_TRAFFIC
+from preprocess.utils import should_omit_packet, read_pcap, PREFIX_TO_APP_ID, PREFIX_TO_TRAFFIC_ID
+from preprocess.utils import PREFIX_TO_TorApp_ID, ID_TO_APP, ID_TO_TRAFFIC
 from tqdm import tqdm
 import time 
 import random

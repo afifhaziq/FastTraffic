@@ -11,6 +11,10 @@ import os
 from utils_fasttraffic import build_dataset, build_iterator, get_time_dif
 
 parser = argparse.ArgumentParser(description='Encrypted Traffic Classification')
+
+parser.add_argument('--data', type=str, required=True, help='input dataset source')
+parser.add_argument('--test', type=int, default=0, help='Train or test')
+
 args = parser.parse_args()
 
 
@@ -40,7 +44,7 @@ def get_parameter_number(net):
 def gen_train(dataset,ls,train_path):
     train_content = []
     for i in ls:
-        f = open(dataset+"/data/"+str(i)+".txt",'r')
+        f = open(dataset+"\\data\\"+str(i)+".txt",'r')
         train_content.extend(f.readlines())
     f_train = open(train_path,'w')
     #print(len(train_content))
@@ -52,7 +56,9 @@ def gen_train(dataset,ls,train_path):
 def main():
 
     # dataset path 
-    dataset = "../dataset/vpn"
+    #dataset = "C:\\Users\\afif\\Documents\\Master\\Code\\benchmark_ntc\\FastTraffic\\dataset"
+    dataset = "C:\\Users\\afif\\Documents\\Master\\Code\\benchmark_ntc\\FastTraffic\\dataset\\" + args.data
+    
     embedding = 'random'
     model_name = 'FastTraffic' 
   
@@ -70,7 +76,7 @@ def main():
     dev_iter = build_iterator(dev_data, config)
     test_iter = build_iterator(test_data, config)
     time_dif = get_time_dif(start_time)
-    print("Time usage:", time_dif)
+    print("Preporcess Time usage:", time_dif)
 
     # train
     config.n_vocab = len(vocab)
@@ -79,8 +85,13 @@ def main():
     init_network(model)
     print(model.parameters)
     print(get_parameter_number(model))
+
+    start_time = time.time()
     train(config, model, train_iter, dev_iter, test_iter)
+    print("Training Time usage:", time_dif)
     test(config,model,test_iter)
+    time_dif = get_time_dif(start_time)
+    
  
     
   

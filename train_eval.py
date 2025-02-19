@@ -9,11 +9,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 from sklearn import metrics
 import time
-from utils import get_time_dif
-
+from utils_fasttraffic import get_time_dif
+import wandb
 
 
 def init_network(model, method='xavier', exclude='embedding', seed=123):
+
     for name, w in model.named_parameters():
         if exclude not in name:
             if 'weight' in name:
@@ -30,6 +31,14 @@ def init_network(model, method='xavier', exclude='embedding', seed=123):
 
 
 def train(config, model, train_iter, dev_iter, test_iter):
+
+    print(config.train_path.split("\\")[-2])
+    wandb.init(project=config.model_name+"-"+config.train_path.split("\\")[-3])
+    wandb.config = {
+    "learning_rate": config.learning_rate,
+    "epochs": config.num_epochs,
+    "batch_size": config.batch_size
+    }
 
     start_time = time.time()
     model.train()
@@ -65,6 +74,13 @@ def train(config, model, train_iter, dev_iter, test_iter):
                     last_improve = total_batch
                 else:
                     improve = ''
+
+                wandb.log({"train_loss":  loss.item()})
+                wandb.log({"train_acc":  train_acc})
+                
+                model.train()
+                wandb.watch(model)
+                
                 time_dif = get_time_dif(start_time)
                 msg = 'Iter: {0:>6},  Train Loss: {1:>5.2},  Train Acc: {2:>6.2%},  Val Loss: {3:>5.2},  Val Acc: {4:>6.2%},  Time: {5} {6}'
                 print(msg.format(total_batch, loss.item(), train_acc, dev_loss, dev_acc, time_dif, improve))

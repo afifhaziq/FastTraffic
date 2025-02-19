@@ -9,15 +9,15 @@ class Config(object):
 
     def __init__(self, dataset, embedding):
         self.model_name = 'FastTraffic'
-        self.train_path = dataset + '/data/train.txt'                                
-        self.dev_path = dataset + '/data/dev.txt'                                    
-        self.test_path = dataset + '/data/test.txt'                                 
+        self.train_path = dataset + '\\data\\train.txt'                                
+        self.dev_path = dataset + '\\data\\dev.txt'                                    
+        self.test_path = dataset + '\\data\\test.txt'                                 
         #self.test_path = dataset + '/data/tsne.txt'
         self.class_list = [x.strip() for x in open(
-            dataset + '/data/class.txt', encoding='utf-8').readlines()]              
-        self.vocab_path = dataset + '/data/vocab.pkl'                                
-        self.save_path = dataset + '/saved_dict/' + self.model_name + '.ckpt'        
-        self.log_path = dataset + '/log/' + self.model_name
+            dataset + '\\data\\class.txt', encoding='utf-8').readlines()]              
+        self.vocab_path = dataset + '\\data\\vocab.pkl'                                
+        self.save_path = dataset + '\\saved_dict\\' + self.model_name + '.ckpt'        
+        self.log_path = dataset + '\\log\\' + self.model_name
         self.embedding_pretrained = None                                       
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
         self.dropout = 0.4                                            

@@ -44,7 +44,8 @@ def build_dataset(config, ues_word):
 
     def biGramHash_new(sequence, i, buckets):
         t =  sequence[i]
-        t1 = sequence[i + 1] 
+        t1 = sequence[i + 1]
+        #print('t type:', type(t), 't1 type:', type(t1)) 
         return (t1 * 14918087 + t*14918087) % buckets
 
     def triGramHash_new(sequence, i, buckets):
@@ -62,12 +63,15 @@ def build_dataset(config, ues_word):
                     continue
                 content, label = lin.split('\t')
                 words_line = []
+                #content = content[:50]
                 token = tokenizer(content)
+                token = token[:50]
                 seq_len = len(token)
                 # word to id
                 for word in token:
                     #print(vocab.get(word, vocab.get(UNK)))
                     words_line.append(vocab.get(word))
+                    #print(words_line)
 
                 # fasttext ngram
                 buckets = config.n_gram_vocab
