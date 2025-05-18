@@ -30,7 +30,7 @@ def init_network(model, method='xavier', exclude='embedding', seed=123):
                 pass
 
 
-def train(config, model, train_iter, dev_iter, test_iter):
+def train(config, model, train_iter, dev_iter, test_iter, data):
 
     print(config.train_path.split("\\")[-2])
     wandb.init(project=config.model_name+"-"+config.train_path.split("\\")[-3])
@@ -54,13 +54,13 @@ def train(config, model, train_iter, dev_iter, test_iter):
         print('Epoch [{}/{}]'.format(epoch + 1, config.num_epochs))
         # scheduler.step()
         for i, (trains, labels) in enumerate(train_iter):
-            s = time.time()
+            #s = time.time()
             outputs = model(trains)
             model.zero_grad()
             loss = F.cross_entropy(outputs, labels)
             loss.backward()
             optimizer.step()
-            e = time.time()
+            #e = time.time()
             #print(e-s)
             if total_batch % 200 == 0:
                 true = labels.data.cpu()
@@ -81,9 +81,9 @@ def train(config, model, train_iter, dev_iter, test_iter):
                 model.train()
                 wandb.watch(model)
                 
-                time_dif = get_time_dif(start_time)
-                msg = 'Iter: {0:>6},  Train Loss: {1:>5.2},  Train Acc: {2:>6.2%},  Val Loss: {3:>5.2},  Val Acc: {4:>6.2%},  Time: {5} {6}'
-                print(msg.format(total_batch, loss.item(), train_acc, dev_loss, dev_acc, time_dif, improve))
+                #time_dif = get_time_dif(start_time)
+                msg = 'Iter: {0:>6},  Train Loss: {1:>5.2},  Train Acc: {2:>6.2%},  Val Loss: {3:>5.2},  Val Acc: {4:>6.2%}, {5}'
+                print(msg.format(total_batch, loss.item(), train_acc, dev_loss, dev_acc, improve))
                 model.train()
               
 
@@ -94,17 +94,33 @@ def train(config, model, train_iter, dev_iter, test_iter):
                 break
         if flag:
             break
+    end_time = time.time()
+    time_dif = (end_time - start_time)/60
+    
+    average_time = time_dif / config.num_epochs
+    print("Training time usage (Minutes):", time_dif)
+    wandb.log({"train_time":  float(time_dif)})
+    print("Average Traning time (epoch):", average_time)
+    wandb.log({"avgtrain_time":  float(average_time)})
 
-    test(config, model, test_iter)
+    test(config, model, test_iter, data)
     
 
 
-def test(config, model, test_iter):
+def test(config, model, test_iter, data):
     # test
+    wandb.init(project=config.model_name+"-"+config.train_path.split("\\")[-3]+"-test")
+    wandb.config = {
+    "learning_rate": config.learning_rate,
+    "epochs": config.num_epochs,
+    "batch_size": config.batch_size
+    }
+
+    
     model.load_state_dict(torch.load(config.save_path))
     model.eval()
     #start_time = time.time()
-    test_acc, test_loss, test_report, test_confusion = evaluate(config, model, test_iter, test=True)
+    test_acc, test_loss, test_report, test_confusion = evaluate(config, model, test_iter, test=True, data=data)
     #time_dif = get_time_dif(start_time)
     msg = 'Test Loss: {0:>5.2},  Test Acc: {1:>6.2%}'
     print(msg.format(test_loss, test_acc))
@@ -112,10 +128,17 @@ def test(config, model, test_iter):
     print(test_report)
     print("Confusion Matrix...")
     print(test_confusion)
+
+    # time_dif, average_time = get_time_dif(start_time, test=1, data=data)
+
+    # print(f"Time usage: {time_dif:.10f} seconds")  # Show 6 decimal places
+    # print(f"Average time usage: {average_time:.10f} seconds")
+    # wandb.log({"test_time":  float(time_dif)})
+    # wandb.log({"average_time":  float(average_time)})
     #print("Time usage:", time_dif)
 
 
-def evaluate(config, model, data_iter, test=False):
+def evaluate(config, model, data_iter, test=False, data=None):
 
     model.eval()
     
@@ -137,16 +160,17 @@ def evaluate(config, model, data_iter, test=False):
             labels_all = np.append(labels_all, labels)
             predict_all = np.append(predict_all, predic)
             
-            """if test == True:
-                f = open("/home/dl/Desktop/program/Traffic_class/TrafficisText/dataset/open_world/ROC/res_fast.csv",'a')
-                #f = open("/home/dl/Desktop/program/Traffic_class/TrafficisText/dataset/open_world/ROC/res_mtt.csv",'a')
-                for i in range(len(predict_)):    
-                    f.write(str(labels[i])+","+str(predict_[i][0])+"\n")"""
+            
 
     acc = metrics.accuracy_score(labels_all, predict_all)
-    time_dif = get_time_dif(start_time)
+    #time_dif = get_time_dif(start_time)
     if test == True:
-        print("###",time_dif)
+        time_dif, average_time = get_time_dif(start_time, test=1, data=data)
+        print(f"Testing Time usage: {time_dif:.10f} seconds")  
+        print(f"Average Testing time: {average_time:.10f} seconds")
+        wandb.log({"test_time":  float(time_dif)})
+        wandb.log({"average_time":  float(average_time)})
+        
     if test:
         report = metrics.classification_report(labels_all, predict_all, target_names=config.class_list, digits=4)
         confusion = metrics.confusion_matrix(labels_all, predict_all)

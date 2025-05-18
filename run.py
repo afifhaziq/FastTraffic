@@ -7,13 +7,13 @@ from train_eval import train, init_network, test
 from importlib import import_module
 import argparse
 from thop import profile, clever_format
-import os
+import wandb
 from utils_fasttraffic import build_dataset, build_iterator, get_time_dif
 
 parser = argparse.ArgumentParser(description='Encrypted Traffic Classification')
 
 parser.add_argument('--data', type=str, required=True, help='input dataset source')
-parser.add_argument('--test', type=int, default=0, help='Train or test')
+parser.add_argument('--test', type=bool, default=False, help='Train or test')
 
 args = parser.parse_args()
 
@@ -69,6 +69,7 @@ def main():
     torch.manual_seed(1)
     torch.cuda.manual_seed_all(1)
     torch.backends.cudnn.deterministic = True 
+
     start_time = time.time()
     print("Loading data...")
     vocab, train_data, dev_data, test_data = build_dataset(config, True)
@@ -76,7 +77,9 @@ def main():
     dev_iter = build_iterator(dev_data, config)
     test_iter = build_iterator(test_data, config)
     time_dif = get_time_dif(start_time)
-    print("Preporcess Time usage:", time_dif)
+    pre_time_dif, average_pre_time = get_time_dif(start_time, test=0, data=args.data)
+    print(f"Preprocess Time : {pre_time_dif:.10f} seconds")  # Show 6 decimal places
+    print(f"Average prepocess time : {average_pre_time:.10f} seconds")
 
     # train
     config.n_vocab = len(vocab)
@@ -86,11 +89,14 @@ def main():
     print(model.parameters)
     print(get_parameter_number(model))
 
-    start_time = time.time()
-    train(config, model, train_iter, dev_iter, test_iter)
-    print("Training Time usage:", time_dif)
-    test(config,model,test_iter)
-    time_dif = get_time_dif(start_time)
+    if args.test == False:
+        print(args.test)
+        print(model.parameters)
+        train(config, model, train_iter, dev_iter, test_iter, args.data)
+    else:
+        test(config,model,test_iter, args.data)
+        wandb.log({"preprocess_time":  float(pre_time_dif)})
+        wandb.log({"averagepreprocess_time":  float(average_pre_time)})
     
  
     
